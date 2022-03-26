@@ -1,0 +1,183 @@
+1 crear proyecto con el comando: django-admin startproject nombreDelProyecto
+
+2 cambiar el lenguaje, vamos a "setting.py" y a la variable "LANGUAGE_CODE" lo cambiamos a "es-es"
+
+3 vamos a empezar a crear nuevas apps, para ellos nos cituamos en la carpeta raiz, osea, al dar dir, tenemos que ver el manage.py 
+ya alli, a ese nivel ejecutamos este comando: 
+
+    python manage.py startapp mainapp
+
+
+4 añadimos nuestra app, al setting.py, en la seccion de "INSTALLED_APPS": 'mainapp'
+
+5 creamos la carpeta para las templates dentro de nuestra carpeta 'mainapp'
+
+6 en templates, de momento creamos la carpeta dentro de templates de 'mainapp' y otra llamada 'layouts', 
+segun es una carpeta por aplicacion dentro de la carpeta de templates
+
+7 creamos primera vista "index" en views.py y le creamos su vista 'index.html' en la carpeta de 'mainapp' dentro de 'templates'
+
+8 vamos a urls y creamos su url de index.html
+
+9 cada que creamos una vista vamos a crearle su funcion, agregarla al path, y su vista html en la carpeta de "mainapp"
+
+9.1 en este caso nos tragimos el layout.html del proyecto anterior, y la carpeta static
+
+10 crear app para paginas, vamos a crear una app para paginas, estando en la carpeta raiz del proyecto
+osea ProyectoDjango "python manage.py startapp pages"
+
+11 vamos a añadir la app "pages" a las apps de django en "setting.py"
+
+12 vamos a crear modelos para la app "pages" en su "models.py" esta marcado como #modelo de page
+
+13 vamos a migrar la base de datos, primero vamos en la consola a la carpeta raiz del proyecto:
+    
+    python manage.py makemigrations
+        
+        #
+        # nota importante cuando hagas cambios en los modelos debes de hacer una nueva migracion
+        #
+
+    ya migrada la base de datos vamos a ejecutar el siguiente comando 
+
+        python manage.py sqlmigrate pages 0001
+
+        donde pages = al nombre de la app que creamos y 0001 = a la version que se genero por el comando anterior a este
+    
+    luego migramos por completo la base, osea el ultimo paso, que es ingresar el siguiente comando 
+
+        python manage.py migrate
+
+
+14 vamos a crear un usuario para el usuario del panel de administracion en este caso sera 
+    
+    python manage.py createsuperuser
+    
+    user = prueba@prueba.com
+    correo electronico = prueba@prueba.com  
+    password = 0987654321
+
+15 vamos a agregar nuestros modelos al panel de administracion llendo a en este caso, la app "pages" en el archivo "admin.py" 
+    luego agregamos 
+
+        from .models import Page 
+
+    luego agregamos en la seccion de "register your models here"
+
+        admin.site.register(Page) 
+        title = "Proyecto con Django"
+        subtitle = "Panel de gestion"
+
+
+        admin.site.site_header = title
+        admin.site.site_title = title
+        admin.site.index_title = subtitle
+
+    luego les cambiamos el nombre llengo en la carpeta de "pages" al archivo "apps.py" y agregar
+
+        verbose_name = "Gestion de paginas"
+
+    por ultimo vamos a "setting.py" en la carpeta de ProyectoDjango, osea el setting donde agregamos la app y agregamos lo siquiente:
+
+        pages.apps.PagesConfig
+
+16 vamos a crear en la pagina de admin 3 paginas
+
+    nombre =trabaja con nosotros,  urlamigable = trabaja-con-nosotros
+    nombre = servicios,  urlamigable = servicios
+    nombre = sobre nosotros,  urlamigable = sobre-nosotros
+
+17 vamos como siempre a ir a nuestro setting.py y cargar alli un context_processors
+    para ello vamos a crear en la carpeta de "pages" un nuevo fichero llamado context_processors.py
+    y dentro 
+    
+        from pages.models import Page 
+        def get_pages(request):
+            pages = Page.objects.values_list('id', 'title', 'slug')
+            return {
+                'pages' : pages 
+            }
+
+    vamos de nuevo a setting.py 
+    y lo cargamos, en el context_processors dentro de templates
+
+        'pages.context_processors.get_pages' donde get_pages es la funcion que creamos
+
+18 vamos al layout.html y hacemos un for en el menu
+
+    {% for page in pages %}
+
+        <li>
+            <a href = "#"> {{page.1}}</a>
+        </li>
+    {%endfor%}
+
+19 nos vamos a la carpeta pages y a "views.py" para crear vistas, tambien dentro de "pages" vamos a crear otra carpeta de "templates"
+    y dentro de "templates" otro folder que se va a llamar "pages" y dentro un archivo "page.html"
+    dentro del views que dijimos al inicio va la siguiente funcion
+
+    def page(request):
+
+        return render(request, "pages/page.html",
+         {
+            "page": "hola mundo desde la app pages"
+        })
+    
+    y cargamos todo lo habitual dentro de page.html
+    por ejemplo
+
+    {% extends 'layouts/layout.html' %}
+
+
+    {%block title %} {{title}} {%endblock%}
+
+    {%block content %}
+
+        <h1> {{title}} </h1>
+
+    {%endblock%}
+
+    y creamos la url
+    importando
+
+    import pages.views
+    path('pagina/', pages.views.page, name="page")
+
+20 vamos a ir a "views.py" de la carpeta "pages" y vamos a agregar lo siguiente 
+
+    from .models import Page 
+
+    page = Page.object.get()
+
+21 vamos a agregar al path
+    lo siguiente 
+    def page(request, slug): #agregamos el slug al path de esta funcion 
+        page = Page.objects.get(slug = slug) #hacemos consulta en la base de datos
+
+        return render(request, "pages/page.html",
+        {
+            
+            "page": page
+        })
+
+    agregamos esto al page.html 
+    {% extends 'layouts/layout.html' %}
+
+
+    {%block title %} {{page.title}} {%endblock%}
+
+    {%block content %}
+
+        <h1> {{page.title}} </h1>
+        <span> {{page.create_at}}</span>
+            <p>{{page.content}} </p>
+
+    {%endblock%}
+
+    ahora vamos a ir al "layout.html" principal y agregamos lo siguiente 
+    en el menu, osea lo actualizamos
+     <a href = "{% url 'page' page.2 %}"> {{page.1}}</a>
+
+
+21 vamos a agregar condicion en "context_processors.py"
+        pages = Page.objects.filter(visible = True).values_list('id', 'title', 'slug')
